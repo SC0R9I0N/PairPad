@@ -40,10 +40,9 @@ def create_session():
     session = Session.create_session(display_name)
     sessions[session.session_id] = session
     
-    logger.info(f"Session created successfully: {session.session_id}")
-
     return jsonify({
         "sessionId": session.session_id,
+        "ownershipToken": session.ownership_token,
         "isOwner": True,
         "sessionLink": session.session_link,
         "owner": session.owner.display_name
@@ -84,10 +83,19 @@ def join_session():
 @app.route("/session/<session_id>/revoke", methods=["DELETE"])
 def revoke_session(session_id):
     logger.info(f"Revoke session request received for sessionId: {session_id}")
+
+    # Verify ownership token
+    token = request.headers.get("X-Ownership-Token")
+
     session = sessions.get(session_id)
     if not session:
         logger.warning(f"Revoke session failed: Session {session_id} not found")
         return jsonify({"error": "Session not found."}), 404
+
+    if session.ownership_token != token:
+        logger.warning(f"Revoke session failed: Invalid ownership token for session {session_id}")
+        return jsonify({"error": "Unauthorized. Only the owner can revoke the session."}), 403
+
     sessions.pop(session_id)
     logger.info(f"Session {session_id} revoked successfully")
     return jsonify({"message": "Session revoked."}), 200

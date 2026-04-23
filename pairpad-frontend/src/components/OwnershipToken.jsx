@@ -11,6 +11,7 @@ import { revokeSession } from "../services/sessionService";
   PROPERTIES:
   - isOwner: boolean indicating if user is session owner
   - sessionId: ID of the current session
+  - ownershipToken: token to prove ownership
   - onRevoke: callback to notify parent of session revocation
 
   BACKEND INTERFACE:
@@ -19,13 +20,13 @@ import { revokeSession } from "../services/sessionService";
     → effect: disconnect all users, invalidate link
 */
 
-function OwnershipToken({ isOwner, sessionId, onRevoke }) {
+function OwnershipToken({ isOwner, sessionId, ownershipToken, onRevoke }) {
   if (!isOwner) return null;
 
   const handleRevoke = async () => {
     if (window.confirm("Are you sure you want to revoke this session? All participants will be disconnected.")) {
       try {
-        await revokeSession(sessionId);
+        await revokeSession(sessionId, ownershipToken);
         onRevoke();
       } catch (error) {
         console.error("Error revoking session:", error);

@@ -77,10 +77,14 @@ export async function createSession(name) {
   }
 
   const data = await response.json();
-  return { id: data.sessionId, isOwner: data.isOwner };
-}
+  return { 
+    id: data.sessionId, 
+    isOwner: data.isOwner,
+    ownershipToken: data.ownershipToken 
+  };
+  }
 
-/*
+  /*
   joinSession
   ------------
   Called when a user clicks "Join Session"
@@ -97,8 +101,8 @@ export async function createSession(name) {
   - Validates session exists
   - Checks user limit (C3)
   - Registers participant
-*/
-export async function joinSession(link, name) {
+  */
+  export async function joinSession(link, name) {
   console.log("Joining session:", link, "as", name);
 
   const response = await fetch("/api/session/join", {
@@ -121,11 +125,19 @@ export async function joinSession(link, name) {
   return { id: data.sessionId };
   }
 
-  export async function revokeSession(sessionId) {
+  /*
+  revokeSession
+  --------------
+  Called by the owner to end the session.
+  */
+  export async function revokeSession(sessionId, ownershipToken) {
   console.log("Revoking session:", sessionId);
 
   const response = await fetch(`/api/session/${sessionId}/revoke`, {
-    method: "DELETE"
+    method: "DELETE",
+    headers: {
+      "X-Ownership-Token": ownershipToken
+    }
   });
 
   if (!response.ok) {
@@ -134,4 +146,6 @@ export async function joinSession(link, name) {
   }
 
   return await response.json();
+  }
+
   }

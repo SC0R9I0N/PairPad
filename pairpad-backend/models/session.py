@@ -8,6 +8,7 @@ class Session:
 
     def __init__(self, owner_display_name: str):
         self.session_id = str(uuid.uuid4())
+        self.ownership_token = str(uuid.uuid4())
         self.session_link = str(uuid.uuid4())
         self.is_active = True
         self.owner = SessionOwner(owner_display_name)

@@ -51,7 +51,7 @@ function SessionAccess({ onEnterSession }) {
     try {
       const session = await createSession(name);
       // Notify parent component to transition to session view with ownership info
-      onEnterSession(session.id, session.isOwner);
+      onEnterSession(session.id, session.isOwner, session.ownershipToken);
     } catch (error) {
       console.error("Error creating session:", error);
       alert(error.message);
