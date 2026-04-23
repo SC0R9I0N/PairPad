@@ -1,0 +1,6 @@
+# backend
+pairpad-backend/venv/
+pairpad-backend/*/__pycache__/
+
+# frontend
+pairpad-frontend/node_modules/

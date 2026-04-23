@@ -48,10 +48,14 @@ function SessionAccess({ onEnterSession }) {
     - Assigns user as session owner
   */
   const handleCreate = async () => {
-    const session = await createSession(name);
-
-    // Notify parent component to transition to session view
-    onEnterSession(session.id);
+    try {
+      const session = await createSession(name);
+      // Notify parent component to transition to session view with ownership info
+      onEnterSession(session.id, session.isOwner);
+    } catch (error) {
+      console.error("Error creating session:", error);
+      alert(error.message);
+    }
   };
 
   /*
@@ -70,9 +74,13 @@ function SessionAccess({ onEnterSession }) {
     - Enforce user limit (C3)
   */
   const handleJoin = async () => {
-    const session = await joinSession(sessionLink, name);
-
-    onEnterSession(session.id);
+    try {
+      const session = await joinSession(sessionLink, name);
+      onEnterSession(session.id, false);
+    } catch (error) {
+      console.error("Error joining session:", error);
+      alert(error.message);
+    }
   };
 
   return (

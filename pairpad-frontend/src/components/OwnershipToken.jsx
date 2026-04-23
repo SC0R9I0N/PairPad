@@ -1,3 +1,5 @@
+import { revokeSession } from "../services/sessionService";
+
 /*
   OwnershipToken.jsx
   -------------------
@@ -8,25 +10,35 @@
 
   PROPERTIES:
   - isOwner: boolean indicating if user is session owner
+  - sessionId: ID of the current session
+  - onRevoke: callback to notify parent of session revocation
 
-  BACKEND INTERFACE (future):
-  ---------------------------
+  BACKEND INTERFACE:
   revokeSession():
-    → POST /session/revoke
-    → request: { sessionId }
+    → DELETE /session/:sessionId/revoke
     → effect: disconnect all users, invalidate link
-
-  FUTURE WORK:
-  - Implement revoke logic
-  - Add confirmation dialog
 */
 
-function OwnershipToken({ isOwner }) {
+function OwnershipToken({ isOwner, sessionId, onRevoke }) {
   if (!isOwner) return null;
+
+  const handleRevoke = async () => {
+    if (window.confirm("Are you sure you want to revoke this session? All participants will be disconnected.")) {
+      try {
+        await revokeSession(sessionId);
+        onRevoke();
+      } catch (error) {
+        console.error("Error revoking session:", error);
+        alert("Failed to revoke session: " + error.message);
+      }
+    }
+  };
 
   return (
     <div>
-      <button>Revoke Session</button>
+      <button onClick={handleRevoke}>
+        Revoke Session
+      </button>
     </div>
   );
 }

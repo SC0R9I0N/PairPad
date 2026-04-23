@@ -31,12 +31,16 @@ import OwnershipToken from "../components/OwnershipToken";
   - Integrate WebSockets
 */
 
-function SessionPage({ sessionId }) {
+function SessionPage({ sessionId, isOwner, onRevoke }) {
   return (
     <div style={{ padding: "20px" }}>
       <h2>Session: {sessionId}</h2>
 
-      <OwnershipToken isOwner={true} />
+      <OwnershipToken 
+        isOwner={isOwner} 
+        sessionId={sessionId} 
+        onRevoke={onRevoke} 
+      />
 
       <div style={{ display: "flex", marginTop: "20px" }}>
         <div style={{ flex: 3, border: "1px solid black", padding: "10px" }}>

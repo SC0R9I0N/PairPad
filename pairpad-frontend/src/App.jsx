@@ -29,13 +29,28 @@ import SessionPage from "./pages/SessionPage";
 
 function App() {
   const [sessionId, setSessionId] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
+
+  const handleEnterSession = (id, ownerStatus = false) => {
+    setSessionId(id);
+    setIsOwner(ownerStatus);
+  };
+
+  const handleLeaveSession = () => {
+    setSessionId(null);
+    setIsOwner(false);
+  };
 
   return (
     <div>
       {!sessionId ? (
-        <HomePage onEnterSession={setSessionId} />
+        <HomePage onEnterSession={handleEnterSession} />
       ) : (
-        <SessionPage sessionId={sessionId} />
+        <SessionPage 
+          sessionId={sessionId} 
+          isOwner={isOwner} 
+          onRevoke={handleLeaveSession} 
+        />
       )}
     </div>
   );
