@@ -7,7 +7,7 @@
   - Capture and update participant identity
   - Provide reusable identity input component
 
-  PROPERTIESS:
+  PROPERTIES:
   - name: current display name
   - setName: function to update name
 
