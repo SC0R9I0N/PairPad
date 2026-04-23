@@ -64,9 +64,7 @@ export async function createSession(name) {
   // Debug log to verify function is being triggered
   console.log("Creating session for:", name);
 
-  // TODO: Replace with real API call
-  /*
-  const response = await fetch("/session", {
+  const response = await fetch("/api/session", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -74,15 +72,19 @@ export async function createSession(name) {
     body: JSON.stringify({ displayName: name })
   });
 
+  if (!response.ok) {
+    throw new Error("Failed to create session");
+  }
+
   const data = await response.json();
-  return { id: data.sessionId };
-  */
+  return { 
+    id: data.sessionId, 
+    isOwner: data.isOwner,
+    ownershipToken: data.ownershipToken 
+  };
+  }
 
-  // TEMP MOCK RESPONSE (used for frontend testing)
-  return { id: "session-123" };
-}
-
-/*
+  /*
   joinSession
   ------------
   Called when a user clicks "Join Session"
@@ -99,13 +101,11 @@ export async function createSession(name) {
   - Validates session exists
   - Checks user limit (C3)
   - Registers participant
-*/
-export async function joinSession(link, name) {
+  */
+  export async function joinSession(link, name) {
   console.log("Joining session:", link, "as", name);
 
-  // TODO: Replace with real API call
-  /*
-  const response = await fetch("/session/join", {
+  const response = await fetch("/api/session/join", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -116,10 +116,36 @@ export async function joinSession(link, name) {
     })
   });
 
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to join session");
+  }
+
   const data = await response.json();
   return { id: data.sessionId };
-  */
+  }
 
-  // TEMP MOCK RESPONSE
-  return { id: link || "session-123" };
-}
+  /*
+  revokeSession
+  --------------
+  Called by the owner to end the session.
+  */
+  export async function revokeSession(sessionId, ownershipToken) {
+  console.log("Revoking session:", sessionId);
+
+  const response = await fetch(`/api/session/${sessionId}/revoke`, {
+    method: "DELETE",
+    headers: {
+      "X-Ownership-Token": ownershipToken
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to revoke session");
+  }
+
+  return await response.json();
+  }
+
+  }
