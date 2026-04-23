@@ -1,13 +1,16 @@
-from flask import Flask
+from flask import Flask, jsonify
 
 # Initialize the Flask application
 app = Flask(__name__)
 
-# Define a route for the home page
-@app.route('/')
-def home():
-    return 'Hello, World!'
+# Health Check
+@app.route("/health", methods=["GET"])
+def health():
+    """Simple liveness check — confirms Flask is running."""
+    return jsonify({"status": "ok"}), 200
 
-# Run the app in debug mode for development
-if __name__ == '__main__':
+# Rest of API Endpoints go here
+
+# Run app
+if __name__ == "__main__":
     app.run(debug=True)
