@@ -298,7 +298,7 @@ code {
   align-items: center;
 }
 
-.avatar-cluster .avatar+.avatar {
+.avatar-cluster .avatar-tooltip-wrapper + .avatar-tooltip-wrapper {
   margin-left: -10px;
 }
 
