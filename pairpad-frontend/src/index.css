@@ -242,3 +242,169 @@ code {
   background: currentColor;
   animation: blink 1s steps(1) infinite;
 }
+
+/* 
+  Participant avatars — Google Docs-style stacked circles used in the
+  session header to show who's currently connected.
+*/
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--bg);
+  /* border matches panel background so stacked avatars visually separate */
+  border: 2px solid var(--bg-elevated);
+  position: relative;
+  cursor: default;
+  flex-shrink: 0;
+}
+
+/* current user gets a phosphor-green ring to stand out */
+.avatar.is-you {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--bg-elevated), 0 0 8px rgba(74, 222, 128, 0.4);
+}
+
+/* owner glyph — small badge in the bottom-right corner */
+.avatar .owner-glyph {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* cluster overlaps avatars for compact stacking */
+.avatar-cluster {
+  display: inline-flex;
+  align-items: center;
+}
+
+.avatar-cluster .avatar-tooltip-wrapper + .avatar-tooltip-wrapper {
+  margin-left: -10px;
+}
+
+/* hover tooltip wrapper for individual avatars */
+.avatar-tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  color: var(--text-heading);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.avatar-tooltip-wrapper:hover .avatar-tooltip {
+  opacity: 1;
+}
+
+/* 
+  Participants dropdown — expanded view reachable via expand button.
+*/
+.participants-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  z-index: 20;
+  text-align: left;
+  animation: dropdown-appear 0.15s ease-out;
+}
+
+@keyframes dropdown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.participants-dropdown .dropdown-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.participants-dropdown .dropdown-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 14px;
+  color: var(--text-heading);
+}
+
+.participants-dropdown .dropdown-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.participants-dropdown .dropdown-you {
+  color: var(--accent);
+  font-size: 11px;
+  margin-left: auto;
+  font-family: var(--mono);
+}
+
+.participants-dropdown .dropdown-footer {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.participants-dropdown .dropdown-glyph {
+  color: var(--accent);
+  font-weight: 700;
+}
