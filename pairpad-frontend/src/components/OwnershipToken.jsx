@@ -4,6 +4,7 @@ import { revokeSession } from "../services/sessionService";
   OwnershipToken.jsx
   -------------------
   Owner-only controls. Currently exposes Revoke Session.
+  Renders as an inline button to sit alongside other header controls.
 
   Props:
   - isOwner: boolean — component returns null if false
@@ -42,12 +43,10 @@ function OwnershipToken({ isOwner, sessionId, ownershipToken, onRevoke }) {
   };
 
   return (
-    <div style={{ textAlign: "left" }}>
-      {/* danger class gives this button red styling for destructive intent */}
-      <button className="danger" onClick={handleRevoke}>
-        Revoke Session
-      </button>
-    </div>
+    // danger class gives this button red styling for destructive intent
+    <button className="danger" onClick={handleRevoke}>
+      Revoke Session
+    </button>
   );
 }
 export default OwnershipToken;

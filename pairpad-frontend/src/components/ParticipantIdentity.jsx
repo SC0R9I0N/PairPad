@@ -7,8 +7,9 @@
   - name: current display name
   - setName: function to update name
   - disabled: optional — disables input during async operations
+  - maxLength: optional — hard cap on input length (browser-enforced)
 */
-function ParticipantIdentity({ name, setName, disabled = false }) {
+function ParticipantIdentity({ name, setName, disabled = false, maxLength }) {
   return (
     <div>
       <input
@@ -17,6 +18,7 @@ function ParticipantIdentity({ name, setName, disabled = false }) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         disabled={disabled}
+        maxLength={maxLength}
       />
     </div>
   );

@@ -9,7 +9,7 @@ import OwnershipToken from "../components/OwnershipToken";
   Responsibilities:
   - Display shareable session link (US2)
   - Provide placeholders for editor, participant list, output console
-  - Expose owner-only revoke action via OwnershipToken
+  - Expose owner-only revoke action via OwnershipToken (in header bar)
 
   Future work:
   - Replace placeholders with real components (Monaco editor, etc.)
@@ -64,7 +64,12 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
     <div style={{ padding: "24px" }}>
       <h2>Session</h2>
 
-      {/* Share link section (US2) */}
+      {/* 
+        Header bar (US2 + revoke):
+        Holds the session label, copy/show-link controls, and — for
+        owners only — the Revoke button. Layout stays identical for
+        everyone; Revoke simply doesn't render for non-owners.
+      */}
       <div
         style={{
           marginTop: "12px",
@@ -101,6 +106,14 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
           {showLink ? "Hide Link" : "Show Link"}
         </button>
 
+        {/* owner-only revoke (renders nothing for non-owners) */}
+        <OwnershipToken
+          isOwner={isOwner}
+          sessionId={sessionId}
+          ownershipToken={ownershipToken}
+          onRevoke={onRevoke}
+        />
+
         {/* conditional render: URL only appears when showLink is true */}
         {showLink && (
           <input
@@ -117,14 +130,6 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
           />
         )}
       </div>
-
-      {/* owner-only revoke button (renders nothing for non-owners) */}
-      <OwnershipToken
-        isOwner={isOwner}
-        sessionId={sessionId}
-        ownershipToken={ownershipToken}
-        onRevoke={onRevoke}
-      />
 
       {/* main workspace row: editor (wide) + participants (narrow) */}
       <div style={{ display: "flex", marginTop: "24px", gap: "16px" }}>
