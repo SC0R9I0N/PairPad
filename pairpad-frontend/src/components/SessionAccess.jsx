@@ -62,7 +62,12 @@ function SessionAccess({ onEnterSession }) {
       // always send trimmed name so backend doesn't store stray whitespace
       const session = await createSession(trimmedName);
       // hand off session info (incl. ownership) to parent for routing
-      onEnterSession(session.id, session.isOwner, session.ownershipToken);
+      onEnterSession(
+        session.id,
+        session.isOwner,
+        session.ownershipToken,
+        trimmedName,
+      );
     } catch (error) {
       console.error("Error creating session:", error);
       alert(error.message);
@@ -83,7 +88,7 @@ function SessionAccess({ onEnterSession }) {
       // send trimmed values to avoid whitespace-caused lookup failures
       const session = await joinSession(trimmedSessionId, trimmedName);
       // joiners are never owners, so pass false
-      onEnterSession(session.id, false);
+      onEnterSession(session.id, false, null, trimmedName);
     } catch (error) {
       console.error("Error joining session:", error);
       alert(error.message);

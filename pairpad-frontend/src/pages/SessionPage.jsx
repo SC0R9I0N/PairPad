@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import OwnershipToken from "../components/OwnershipToken";
+import ParticipantList from "../components/ParticipantList";
+import { getParticipants } from "../services/participantService";
 
 /*
   SessionPage.jsx
@@ -8,23 +10,48 @@ import OwnershipToken from "../components/OwnershipToken";
 
   Responsibilities:
   - Display shareable session link (US2)
-  - Provide placeholders for editor, participant list, output console
-  - Expose owner-only revoke action via OwnershipToken (in header bar)
+  - Show active participants as avatar cluster (US4)
+  - Provide placeholders for editor and output console
+  - Expose owner-only revoke via OwnershipToken
 
   Future work:
   - Replace placeholders with real components (Monaco editor, etc.)
-  - Wire up WebSocket for real-time updates (FR6, FR9, FR11)
+  - Wire up WebSocket for real-time participant updates (FR6)
   - POST /execute for code execution
 */
-function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
+function SessionPage({
+  sessionId,
+  isOwner,
+  ownershipToken,
+  displayName,
+  onRevoke,
+}) {
   // tracks brief "Copied!" feedback after clicking Copy Link
   const [copied, setCopied] = useState(false);
 
   // controls whether the full share URL is visible on screen
   const [showLink, setShowLink] = useState(false);
 
+  // list of participants in this session — empty until fetched
+  const [participants, setParticipants] = useState([]);
+
   // build the full share URL from current origin + session ID
   const shareableLink = `${window.location.origin}/?session=${sessionId}`;
+
+  /*
+    Fetch participants when session or user identity changes.
+    Currently pulls stubbed data. When real-time lands, this effect
+    will likely be replaced by a WebSocket subscription.
+  */
+  useEffect(() => {
+    // build the caller's identity object for the service
+    const currentUser = { displayName, isOwner };
+    getParticipants(sessionId, currentUser)
+      .then((result) => setParticipants(result))
+      .catch((error) => {
+        console.error("Error fetching participants:", error);
+      });
+  }, [sessionId, displayName, isOwner]);
 
   /*
     handleCopy — copies the share URL using the browser Clipboard API.
@@ -50,11 +77,10 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
     border: "1px solid var(--border)",
     borderRadius: "var(--radius-lg)",
     padding: "16px",
-    minHeight: "280px",
     textAlign: "left",
   };
 
-  // style for the muted placeholder text inside empty panels
+  // style for muted placeholder text inside empty panels
   const placeholderText = {
     color: "var(--text-muted)",
     fontSize: "14px",
@@ -62,17 +88,24 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
 
   return (
     <div style={{ padding: "24px" }}>
-      <h2>Session</h2>
-
-      {/* 
-        Header bar (US2 + revoke):
-        Holds the session label, copy/show-link controls, and — for
-        owners only — the Revoke button. Layout stays identical for
-        everyone; Revoke simply doesn't render for non-owners.
-      */}
+      {/* Top row: session heading on the left, participants on the right */}
       <div
         style={{
-          marginTop: "12px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "12px",
+          gap: "16px",
+          flexWrap: "wrap",
+        }}
+      >
+        <h2 style={{ margin: 0 }}>Session</h2>
+        <ParticipantList participants={participants} />
+      </div>
+
+      {/* Share link bar with optional revoke */}
+      <div
+        style={{
           marginBottom: "24px",
           padding: "12px 16px",
           background: "var(--bg-elevated)",
@@ -85,7 +118,7 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
           flexWrap: "wrap",
         }}
       >
-        {/* section label styled like a terminal tag */}
+        {/* terminal-style section label */}
         <span
           style={{
             fontFamily: "var(--mono)",
@@ -101,7 +134,7 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
         {/* primary action: copy. Label flips based on `copied` state */}
         <button onClick={handleCopy}>{copied ? "Copied!" : "Copy Link"}</button>
 
-        {/* secondary action: toggle visibility of the full URL */}
+        {/* secondary action: toggle the full URL visibility */}
         <button className="secondary" onClick={() => setShowLink(!showLink)}>
           {showLink ? "Hide Link" : "Show Link"}
         </button>
@@ -120,7 +153,6 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
             type="text"
             value={shareableLink}
             readOnly
-            // auto-select on focus for easy manual copy
             onFocus={(e) => e.target.select()}
             style={{
               flex: 1,
@@ -131,20 +163,13 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
         )}
       </div>
 
-      {/* main workspace row: editor (wide) + participants (narrow) */}
-      <div style={{ display: "flex", marginTop: "24px", gap: "16px" }}>
-        <div style={{ ...panelStyle, flex: 3 }}>
-          <h3>Code Editor</h3>
-          <p style={placeholderText}>Editor coming soon</p>
-        </div>
-
-        <div style={{ ...panelStyle, flex: 1 }}>
-          <h3>Participants</h3>
-          <p style={placeholderText}>List coming soon</p>
-        </div>
+      {/* Full-width editor panel (participants no longer share the row) */}
+      <div style={{ ...panelStyle, minHeight: "400px" }}>
+        <h3>Code Editor</h3>
+        <p style={placeholderText}>Editor coming soon</p>
       </div>
 
-      {/* output console spans full width below */}
+      {/* Output console spans full width below */}
       <div style={{ ...panelStyle, marginTop: "16px", minHeight: "140px" }}>
         <h3>Output Console</h3>
         <p style={placeholderText}>Execution output will appear here</p>
