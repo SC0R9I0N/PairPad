@@ -137,7 +137,7 @@ Did the primary development work on the starting Flask skeleton and implementing
 Classes. Set up the framework that allowed for the creation of robust unit tests.
 
 ### **Aidan Smagh — Developer**
-Did the primary development work on the frontend unit tests with Jest and React Testing Library, ensuring that the 
+Did the primary development work on the frontend unit tests with Vitest, ensuring that the 
 logic was correct and all React items were properly implemented.
 
 ---
