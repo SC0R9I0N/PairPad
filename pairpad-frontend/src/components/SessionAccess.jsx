@@ -5,52 +5,35 @@ import ParticipantIdentity from "./ParticipantIdentity";
 /*
   SessionAccess.jsx
   ------------------
-  CORE UI COMPONENT for User Access subsystem.
+  Core UI component for the User Access subsystem.
 
-  RESPONSIBILITY:
+  Responsibilities:
   - Allow users to create or join sessions
   - Collect user identity (display name)
+  - Auto-fill session ID from URL (US2)
   - Communicate with backend via sessionService
 
-  STATE VARIABLES:
-  - name: user's display name
-  - sessionLink: session identifier input
-
-  DATA FLOW:
-  User Input → Component State → Service Call → Backend → Response → UI Update
-
-  FUTURE IMPROVEMENTS:
-  - Input validation (empty name, invalid link)
-  - Error handling (session full, invalid session)
-  - Display generated session link (FR2)
+  Data flow: User Input → State → Service → Backend → Response → UI
 */
-
 function SessionAccess({ onEnterSession }) {
-  // Stores the user's display name
+  // display name input
   const [name, setName] = useState("");
 
-  // Stores session link input for joining sessions
-  const [sessionLink, setSessionLink] = useState("");
+  // session ID input — lazy initial state reads "?session=<id>" from URL once
+  const [sessionId, setSessionId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("session") || "";
+  });
 
   /*
-    handleCreate
-    -------------
-    Triggered when user clicks "Create Session"
-
-    FLOW:
-    1. Calls createSession service
-    2. Receives session ID from backend (or mock)
-    3. Passes session ID to parent (App.jsx)
-    4. App navigates to SessionPage
-
-    BACKEND EXPECTATION:
-    - Server generates unique session ID
-    - Assigns user as session owner
+    handleCreate — requests a new session from the backend, then hands
+    off session info (incl. ownership) to parent for routing.
   */
   const handleCreate = async () => {
     try {
+      // request new session from backend
       const session = await createSession(name);
-      // Notify parent component to transition to session view with ownership info
+      // hand off session info (incl. ownership) to parent for routing
       onEnterSession(session.id, session.isOwner, session.ownershipToken);
     } catch (error) {
       console.error("Error creating session:", error);
@@ -59,23 +42,14 @@ function SessionAccess({ onEnterSession }) {
   };
 
   /*
-    handleJoin
-    -----------
-    Triggered when user clicks "Join Session"
-
-    FLOW:
-    1. Calls joinSession service with link + name
-    2. Backend validates session and user capacity
-    3. Returns session ID
-    4. App navigates to SessionPage
-
-    BACKEND EXPECTATION:
-    - Validate session exists
-    - Enforce user limit (C3)
+    handleJoin — asks backend to join the current session ID under the
+    given name, then hands off to parent. Joiners are never owners.
   */
   const handleJoin = async () => {
     try {
-      const session = await joinSession(sessionLink, name);
+      // ask backend to join the session with current name + ID
+      const session = await joinSession(sessionId, name);
+      // joiners are never owners, so pass false
       onEnterSession(session.id, false);
     } catch (error) {
       console.error("Error joining session:", error);
@@ -83,36 +57,95 @@ function SessionAccess({ onEnterSession }) {
     }
   };
 
+  /*
+    handleSubmit — fires when the form submits (via the hidden submit
+    button when Enter is pressed). Branches based on state:
+      - empty session ID → create a new session
+      - session ID filled → join that session
+    e.preventDefault() stops the default page reload.
+  */
+  const handleSubmit = (e) => {
+    e.preventDefault(); // stop browser's default form submit
+
+    // .trim() guards against whitespace-only input being treated as "filled"
+    if (sessionId.trim()) {
+      // session ID present → user wants to join
+      handleJoin();
+    } else {
+      // session ID empty → user wants to create
+      handleCreate();
+    }
+  };
+
   return (
     <div style={{ marginTop: "20px" }}>
-      {/* 
-        ParticipantIdentity Component
-        Handles display name input
-      */}
-      <ParticipantIdentity name={name} setName={setName} />
-
-      {/* Create Session Button */}
-      <div style={{ marginTop: "10px" }}>
-        <button onClick={handleCreate}>
-          Create Session
-        </button>
-      </div>
-
-      {/* Join Session Section */}
-      <div style={{ marginTop: "20px" }}>
-        <input
-          type="text"
-          placeholder="Enter session link"
-          value={sessionLink}
-          onChange={(e) => setSessionLink(e.target.value)}
+      <form onSubmit={handleSubmit}>
+        {/* 
+          Hidden submit button acts as the form's default button for
+          Enter-to-submit. Enabled whenever name is filled, so Enter
+          always works. handleSubmit branches to the right action.
+          Kept out of the tab order and accessibility tree.
+        */}
+        <button
+          type="submit"
+          disabled={!name}
+          aria-hidden="true"
+          tabIndex={-1}
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            opacity: 0,
+            pointerEvents: "none",
+          }}
         />
 
-        <button onClick={handleJoin}>
-          Join Session
-        </button>
-      </div>
+        {/* shared display name input */}
+        <ParticipantIdentity name={name} setName={setName} />
+
+        {/* Join section */}
+        <div style={{ marginTop: "30px" }}>
+          <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>
+            Join an existing session
+          </h3>
+          <input
+            type="text"
+            placeholder="Enter session ID"
+            value={sessionId}
+            onChange={(e) => setSessionId(e.target.value)}
+          />
+          {/* type="button" — explicit click only, Enter routed via hidden submit */}
+          {/* disabled unless name AND session ID are filled */}
+          <button
+            type="button"
+            onClick={handleJoin}
+            disabled={!name || !sessionId}
+            style={{ marginLeft: "8px" }}
+          >
+            Join Session
+          </button>
+        </div>
+
+        {/* visual separator */}
+        <div style={{ margin: "30px 0", color: "var(--text)" }}>— or —</div>
+
+        {/* Create section */}
+        <div>
+          <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>
+            Start a new session
+          </h3>
+          {/* type="button" — explicit click only */}
+          {/* disabled unless name filled AND session ID empty */}
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={!name || sessionId}
+          >
+            Create New Session
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
-
 export default SessionAccess;

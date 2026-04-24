@@ -147,5 +147,3 @@ export async function createSession(name) {
 
   return await response.json();
   }
-
-  }
