@@ -27,9 +27,8 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
   const shareableLink = `${window.location.origin}/?session=${sessionId}`;
 
   /*
-    handleCopy — copies the share URL to clipboard using the browser's
-    Clipboard API. Flashes "Copied!" for 2 seconds on success.
-    Note: navigator.clipboard only works on HTTPS or localhost.
+    handleCopy — copies the share URL using the browser Clipboard API.
+    Flashes "Copied!" for 2s on success. Requires HTTPS or localhost.
   */
   const handleCopy = async () => {
     try {
@@ -45,19 +44,35 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
     }
   };
 
+  // shared panel styling for the workspace cards
+  const panelStyle = {
+    background: "var(--bg-elevated)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-lg)",
+    padding: "16px",
+    minHeight: "280px",
+    textAlign: "left",
+  };
+
+  // style for the muted placeholder text inside empty panels
+  const placeholderText = {
+    color: "var(--text-muted)",
+    fontSize: "14px",
+  };
+
   return (
-    <div style={{ padding: "20px" }}>
-      {/* header stays clean — raw UUID hidden behind "Show Link" */}
+    <div style={{ padding: "24px" }}>
       <h2>Session</h2>
 
       {/* Share link section (US2) */}
       <div
         style={{
-          marginTop: "10px",
-          marginBottom: "20px",
-          padding: "10px",
+          marginTop: "12px",
+          marginBottom: "24px",
+          padding: "12px 16px",
+          background: "var(--bg-elevated)",
           border: "1px solid var(--border)",
-          borderRadius: "4px",
+          borderRadius: "var(--radius)",
           display: "flex",
           alignItems: "center",
           gap: "10px",
@@ -65,13 +80,24 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
           flexWrap: "wrap",
         }}
       >
-        <span style={{ fontWeight: "500" }}>Share link:</span>
+        {/* section label styled like a terminal tag */}
+        <span
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: "11px",
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+            color: "var(--text-muted)",
+          }}
+        >
+          Share link
+        </span>
 
         {/* primary action: copy. Label flips based on `copied` state */}
         <button onClick={handleCopy}>{copied ? "Copied!" : "Copy Link"}</button>
 
         {/* secondary action: toggle visibility of the full URL */}
-        <button onClick={() => setShowLink(!showLink)}>
+        <button className="secondary" onClick={() => setShowLink(!showLink)}>
           {showLink ? "Hide Link" : "Show Link"}
         </button>
 
@@ -85,10 +111,8 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
             onFocus={(e) => e.target.select()}
             style={{
               flex: 1,
-              minWidth: "200px",
-              padding: "6px 8px",
-              fontFamily: "var(--mono)",
-              fontSize: "14px",
+              minWidth: "240px",
+              fontSize: "13px",
             }}
           />
         )}
@@ -102,35 +126,23 @@ function SessionPage({ sessionId, isOwner, ownershipToken, onRevoke }) {
         onRevoke={onRevoke}
       />
 
-      {/* main workspace placeholders */}
-      <div style={{ display: "flex", marginTop: "20px" }}>
-        <div style={{ flex: 3, border: "1px solid black", padding: "10px" }}>
+      {/* main workspace row: editor (wide) + participants (narrow) */}
+      <div style={{ display: "flex", marginTop: "24px", gap: "16px" }}>
+        <div style={{ ...panelStyle, flex: 3 }}>
           <h3>Code Editor</h3>
-          <p>(Editor coming soon)</p>
+          <p style={placeholderText}>Editor coming soon</p>
         </div>
 
-        <div
-          style={{
-            flex: 1,
-            marginLeft: "10px",
-            border: "1px solid black",
-            padding: "10px",
-          }}
-        >
+        <div style={{ ...panelStyle, flex: 1 }}>
           <h3>Participants</h3>
-          <p>(List coming soon)</p>
+          <p style={placeholderText}>List coming soon</p>
         </div>
       </div>
 
-      <div
-        style={{
-          marginTop: "20px",
-          border: "1px solid black",
-          padding: "10px",
-        }}
-      >
+      {/* output console spans full width below */}
+      <div style={{ ...panelStyle, marginTop: "16px", minHeight: "140px" }}>
         <h3>Output Console</h3>
-        <p>(Execution output here)</p>
+        <p style={placeholderText}>Execution output will appear here</p>
       </div>
     </div>
   );

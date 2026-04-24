@@ -11,6 +11,7 @@ import ParticipantIdentity from "./ParticipantIdentity";
   - Allow users to create or join sessions
   - Collect user identity (display name)
   - Auto-fill session ID from URL (US2)
+  - Show loading feedback during async backend calls
   - Communicate with backend via sessionService
 
   Data flow: User Input → State → Service → Backend → Response → UI
@@ -26,10 +27,21 @@ function SessionAccess({ onEnterSession }) {
   });
 
   /*
+    submitting — which async action is in flight, if any.
+    Values: null (idle) | "create" | "join"
+    Used to disable inputs/buttons and flip button labels during the wait.
+  */
+  const [submitting, setSubmitting] = useState(null);
+  const isLoading = submitting !== null;
+
+  /*
     handleCreate — requests a new session from the backend, then hands
     off session info (incl. ownership) to parent for routing.
+    Marks "create" as submitting so UI shows loading feedback.
   */
   const handleCreate = async () => {
+    // mark as submitting so UI disables controls and shows cursor
+    setSubmitting("create");
     try {
       // request new session from backend
       const session = await createSession(name);
@@ -38,14 +50,20 @@ function SessionAccess({ onEnterSession }) {
     } catch (error) {
       console.error("Error creating session:", error);
       alert(error.message);
+    } finally {
+      // always clear loading state, even on error (so user can retry)
+      setSubmitting(null);
     }
   };
 
   /*
     handleJoin — asks backend to join the current session ID under the
     given name, then hands off to parent. Joiners are never owners.
+    Marks "join" as submitting so UI shows loading feedback.
   */
   const handleJoin = async () => {
+    // mark as submitting so UI disables controls and shows cursor
+    setSubmitting("join");
     try {
       // ask backend to join the session with current name + ID
       const session = await joinSession(sessionId, name);
@@ -54,6 +72,9 @@ function SessionAccess({ onEnterSession }) {
     } catch (error) {
       console.error("Error joining session:", error);
       alert(error.message);
+    } finally {
+      // always clear loading state, even on error (so user can retry)
+      setSubmitting(null);
     }
   };
 
@@ -66,6 +87,9 @@ function SessionAccess({ onEnterSession }) {
   */
   const handleSubmit = (e) => {
     e.preventDefault(); // stop browser's default form submit
+
+    // ignore Enter while a request is already in flight
+    if (isLoading) return;
 
     // .trim() guards against whitespace-only input being treated as "filled"
     if (sessionId.trim()) {
@@ -84,11 +108,10 @@ function SessionAccess({ onEnterSession }) {
           Hidden submit button acts as the form's default button for
           Enter-to-submit. Enabled whenever name is filled, so Enter
           always works. handleSubmit branches to the right action.
-          Kept out of the tab order and accessibility tree.
         */}
         <button
           type="submit"
-          disabled={!name}
+          disabled={!name || isLoading}
           aria-hidden="true"
           tabIndex={-1}
           style={{
@@ -100,8 +123,12 @@ function SessionAccess({ onEnterSession }) {
           }}
         />
 
-        {/* shared display name input */}
-        <ParticipantIdentity name={name} setName={setName} />
+        {/* shared display name input — disabled during submission */}
+        <ParticipantIdentity
+          name={name}
+          setName={setName}
+          disabled={isLoading}
+        />
 
         {/* Join section */}
         <div style={{ marginTop: "30px" }}>
@@ -113,16 +140,27 @@ function SessionAccess({ onEnterSession }) {
             placeholder="Enter session ID"
             value={sessionId}
             onChange={(e) => setSessionId(e.target.value)}
+            disabled={isLoading}
           />
-          {/* type="button" — explicit click only, Enter routed via hidden submit */}
-          {/* disabled unless name AND session ID are filled */}
+          {/* 
+            Join button — disabled unless name AND session ID are filled
+            AND not currently submitting. Shows "Joining▊" during wait.
+          */}
           <button
             type="button"
             onClick={handleJoin}
-            disabled={!name || !sessionId}
+            disabled={!name || !sessionId || isLoading}
             style={{ marginLeft: "8px" }}
           >
-            Join Session
+            {submitting === "join" ? (
+              // terminal-style loading label with blinking cursor
+              <>
+                Joining
+                <span className="blink-cursor" aria-hidden="true" />
+              </>
+            ) : (
+              "Join Session"
+            )}
           </button>
         </div>
 
@@ -134,14 +172,24 @@ function SessionAccess({ onEnterSession }) {
           <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>
             Start a new session
           </h3>
-          {/* type="button" — explicit click only */}
-          {/* disabled unless name filled AND session ID empty */}
+          {/* 
+            Create button — disabled unless name filled AND session ID empty
+            AND not currently submitting. Shows "Creating▊" during wait.
+          */}
           <button
             type="button"
             onClick={handleCreate}
-            disabled={!name || sessionId}
+            disabled={!name || sessionId || isLoading}
           >
-            Create New Session
+            {submitting === "create" ? (
+              // terminal-style loading label with blinking cursor
+              <>
+                Creating
+                <span className="blink-cursor" aria-hidden="true" />
+              </>
+            ) : (
+              "Create New Session"
+            )}
           </button>
         </div>
       </form>

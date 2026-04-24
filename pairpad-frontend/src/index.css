@@ -1,23 +1,54 @@
+/*
+  Global design tokens and styles for PairPad.
+  Aesthetic: phosphor terminal — deep green-blacks with phosphor accent,
+  paired with IBM Plex typography for developer authenticity.
+*/
+
+/* load IBM Plex Sans + Mono from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  color-scheme: dark;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* backgrounds */
+  --bg: #0a0e0a;
+  --bg-elevated: #12181a;
+  --bg-subtle: #0f1411;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
+  /* borders */
+  --border: #1f2a22;
+  --border-strong: #2a3a2e;
+
+  /* text */
+  --text: #a3b1a7;
+  --text-heading: #e8f0e8;
+  --text-muted: #6b7a6f;
+
+  /* accent — phosphor green */
+  --accent: #4ade80;
+  --accent-dim: #22c55e;
+  --accent-bg: rgba(74, 222, 128, 0.08);
+  --accent-border: rgba(74, 222, 128, 0.3);
+
+  /* danger — for destructive actions like revoke */
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.1);
+  --danger-border: rgba(248, 113, 113, 0.3);
+
+  /* misc */
+  --code-bg: #0f1411;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  /* typography */
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
+  /* radius */
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  font: 16px/1.5 var(--sans);
+  letter-spacing: 0.01em;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -26,34 +57,20 @@
   -moz-osx-font-smoothing: grayscale;
 
   @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    font-size: 15px;
   }
 }
 
 body {
   margin: 0;
+  min-height: 100vh;
+  /* subtle phosphor glow from the top of the page */
+  background-image: radial-gradient(ellipse at 50% -10%,
+      rgba(74, 222, 128, 0.05) 0%,
+      transparent 60%);
 }
 
+/* bounded editor-like container */
 #root {
   width: 1126px;
   max-width: 100%;
@@ -66,46 +83,162 @@ body {
   box-sizing: border-box;
 }
 
+/* headings use mono for terminal character */
 h1,
-h2 {
-  font-family: var(--heading);
+h2,
+h3 {
+  font-family: var(--mono);
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--text-heading);
+  margin: 0;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
+  font-size: 48px;
+  letter-spacing: -0.03em;
+  margin: 40px 0 8px;
+
   @media (max-width: 1024px) {
     font-size: 36px;
-    margin: 20px 0;
+    margin: 24px 0 6px;
   }
 }
+
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
 }
+
+/* h3 styled as terminal-style section label */
+h3 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
 p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* 
+  Buttons — primary action style by default.
+  Secondary and danger variants available via className.
+*/
+button {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 9px 18px;
+  background: var(--accent);
+  color: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
+button:hover:not(:disabled) {
+  background: var(--accent-dim);
+  border-color: var(--accent-dim);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+
+/* outlined button for secondary/neutral actions */
+button.secondary {
+  background: transparent;
+  color: var(--text-heading);
+  border-color: var(--border-strong);
+}
+
+button.secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* red-tinted button for destructive actions (e.g., revoke) */
+button.danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+button.danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: var(--danger);
+}
+
+/* inputs use mono for that terminal/data-entry feel */
+input[type="text"] {
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 9px 12px;
+  background: var(--bg-elevated);
+  color: var(--text-heading);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+input[type="text"]::placeholder {
+  color: var(--text-muted);
+}
+
+/* inline code style */
 code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 2px 6px;
   background: var(--code-bg);
+  color: var(--accent);
+  border-radius: 4px;
+}
+
+/* 
+  Blinking cursor for loading states — terminal feel.
+  Used via <span className="blink-cursor" /> inside buttons during async work.
+*/
+@keyframes blink {
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.blink-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 4px;
+  vertical-align: -0.1em;
+  /* currentColor = inherits the button's text color (green when active,
+     grey when disabled), so the cursor always contrasts correctly */
+  background: currentColor;
+  animation: blink 1s steps(1) infinite;
 }

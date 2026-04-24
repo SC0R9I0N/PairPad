@@ -1,22 +1,14 @@
 /*
   ParticipantIdentity.jsx
   ------------------------
-  Handles user display name input.
+  Shared display name input.
 
-  RESPONSIBILITY:
-  - Capture and update participant identity
-  - Provide reusable identity input component
-
-  PROPERTIES:
+  Props:
   - name: current display name
   - setName: function to update name
-
-  FUTURE WORK:
-  - Validate non-empty input
-  - Enforce naming rules (length, characters)
+  - disabled: optional — disables input during async operations
 */
-
-function ParticipantIdentity({ name, setName }) {
+function ParticipantIdentity({ name, setName, disabled = false }) {
   return (
     <div>
       <input
@@ -24,9 +16,9 @@ function ParticipantIdentity({ name, setName }) {
         placeholder="Enter display name"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        disabled={disabled}
       />
     </div>
   );
 }
-
 export default ParticipantIdentity;
