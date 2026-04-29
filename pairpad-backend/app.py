@@ -101,6 +101,28 @@ def revoke_session(session_id):
     return jsonify({"message": "Session revoked."}), 200
 
 
+# Get session status
+@app.route("/session/<session_id>", methods=["GET"])
+def get_session_status(session_id):
+    logger.debug(f"Session status requested for sessionId: {session_id}")
+
+    session = sessions.get(session_id)
+    if not session:
+        logger.warning(f"Session status failed: Session {session_id} not found")
+        return jsonify({"error": "Session not found."}), 404
+
+    participants = [{"displayName": session.owner.display_name, "isOwner": True}]
+    participants.extend(
+        {"displayName": participant.display_name, "isOwner": False}
+        for participant in session.participants
+    )
+
+    return jsonify({
+        "sessionId": session.session_id,
+        "participants": participants,
+    }), 200
+
+
 # Run app
 if __name__ == "__main__":
     app.run(debug=True)
