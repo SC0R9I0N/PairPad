@@ -104,7 +104,7 @@ def revoke_session(session_id):
 # Get session status
 @app.route("/session/<session_id>", methods=["GET"])
 def get_session_status(session_id):
-    logger.info(f"Session status requested for sessionId: {session_id}")
+    logger.debug(f"Session status requested for sessionId: {session_id}")
 
     session = sessions.get(session_id)
     if not session:
