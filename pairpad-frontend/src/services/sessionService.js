@@ -12,37 +12,6 @@
   - Components never call fetch() directly
   - All HTTP/WebSocket communication flows through services
 
-  CURRENT STATE:
-  - Uses MOCK responses (no real backend yet)
-  - Allows frontend to function independently during development
-
-  FUTURE BACKEND API CONTRACT:
-  ----------------------------
-
-  createSession(name):
-    POST /session
-    Request Body:
-      {
-        displayName: string
-      }
-    Response:
-      {
-        sessionId: string,
-        isOwner: boolean
-      }
-
-  joinSession(link, name):
-    POST /session/join
-    Request Body:
-      {
-        sessionId: string,
-        displayName: string
-      }
-    Response:
-      {
-        sessionId: string
-      }
-*/
 
 /*
   createSession
@@ -56,7 +25,7 @@
   - session object containing:
       { id: string }
 
-  BACKEND INTERACTION (future):
+  BACKEND INTERACTION:
   - Sends POST request to server
   - Server creates session and assigns ownership
 */

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import OwnershipToken from "../components/OwnershipToken";
 import ParticipantList from "../components/ParticipantList";
-import { getParticipants } from "../services/participantService";
+import Banner from "../components/Banner";
+import { useSessionStatus } from "../hooks/useSessionStatus";
 
 /*
   SessionPage.jsx
@@ -10,15 +11,21 @@ import { getParticipants } from "../services/participantService";
 
   Responsibilities:
   - Display shareable session link (US2)
-  - Show active participants as avatar cluster (US4)
+  - Show active participants as avatar cluster (US4) via polling
+  - Detect owner-initiated revocation via polling and route home (US5)
   - Provide placeholders for editor and output console
   - Expose owner-only revoke via OwnershipToken
+  - Surface in-session errors/warnings via Banner
 
   Future work:
   - Replace placeholders with real components (Monaco editor, etc.)
-  - Wire up WebSocket for real-time participant updates (FR6)
+  - Replace polling with backend subscription
   - POST /execute for code execution
 */
+
+// how long the "session ended" banner shows before redirect (ms)
+const SESSION_ENDED_REDIRECT_DELAY = 3000;
+
 function SessionPage({
   sessionId,
   isOwner,
@@ -32,26 +39,50 @@ function SessionPage({
   // controls whether the full share URL is visible on screen
   const [showLink, setShowLink] = useState(false);
 
-  // list of participants in this session — empty until fetched
-  const [participants, setParticipants] = useState([]);
+  // inline error/warning surfaced to the user — replaces alert()
+  // shape: { variant: "error" | "warning" | "info", message: string }
+  const [banner, setBanner] = useState(null);
+
+  /*
+    Drive the participant list and revocation detection from the
+    polling hook.
+  */
+  const { participants, sessionEnded } = useSessionStatus(
+    sessionId,
+    displayName,
+    isOwner,
+  );
 
   // build the full share URL from current origin + session ID
   const shareableLink = `${window.location.origin}/?session=${sessionId}`;
 
   /*
-    Fetch participants when session or user identity changes.
-    Currently pulls stubbed data. When real-time lands, this effect
-    will likely be replaced by a WebSocket subscription.
+    React to the polling hook detecting revoked session:
+    - Route home after a short delay
+    - The owner who initiated the revoke unmounts immediately via onRevoke() in OwnershipToken
+    - The banner for "session ended" rendered below.
   */
   useEffect(() => {
-    // build the caller's identity object for the service
-    const currentUser = { displayName, isOwner };
-    getParticipants(sessionId, currentUser)
-      .then((result) => setParticipants(result))
-      .catch((error) => {
-        console.error("Error fetching participants:", error);
-      });
-  }, [sessionId, displayName, isOwner]);
+    // owners navigate via OwnershipToken's onRevoke — skip the polling path
+    if (!sessionEnded || isOwner) return;
+
+    // redirect to home after a short delay
+    const timer = setTimeout(onRevoke, SESSION_ENDED_REDIRECT_DELAY);
+    return () => clearTimeout(timer);
+  }, [sessionEnded, isOwner, onRevoke]);
+
+  /*
+  Displayed banner = 
+    - the session-ended message, otherwise:
+    - the user-controlled banner
+*/
+  const displayedBanner =
+    sessionEnded && !isOwner
+      ? {
+          variant: "error",
+          message: "This session has been ended by the owner.",
+        }
+      : banner;
 
   /*
     handleCopy — copies the share URL using the browser Clipboard API.
@@ -67,8 +98,21 @@ function SessionPage({
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy link:", error);
-      alert("Could not copy to clipboard. Please copy the link manually.");
+      // recoverable — user can manually select the URL via "Show Link"
+      setBanner({
+        variant: "warning",
+        message: "Could not copy to clipboard. Please copy the link manually.",
+      });
     }
+  };
+
+  /*
+    handleRevokeError — receives revoke failure messages from
+    OwnershipToken and surfaces them via the banner.
+  */
+  const handleRevokeError = (message) => {
+    // revoke failure is recoverable (network blip etc.) — warning, not error
+    setBanner({ variant: "warning", message });
   };
 
   // shared panel styling for the workspace cards
@@ -102,6 +146,13 @@ function SessionPage({
         <h2 style={{ margin: 0 }}>Session</h2>
         <ParticipantList participants={participants} />
       </div>
+
+      {/* in-session banner — sits above the share bar so it's prominent */}
+      <Banner
+        variant={displayedBanner?.variant}
+        message={displayedBanner?.message}
+        onDismiss={sessionEnded ? undefined : () => setBanner(null)}
+      />
 
       {/* Share link bar with optional revoke */}
       <div
@@ -145,6 +196,7 @@ function SessionPage({
           sessionId={sessionId}
           ownershipToken={ownershipToken}
           onRevoke={onRevoke}
+          onError={handleRevokeError}
         />
 
         {/* conditional render: URL only appears when showLink is true */}
