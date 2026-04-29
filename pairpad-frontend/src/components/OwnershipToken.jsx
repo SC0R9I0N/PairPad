@@ -56,7 +56,11 @@ function OwnershipToken({
     // fragment so the trigger button + dialog can sit as siblings
     <>
       {/* danger class gives this button red styling for destructive intent */}
-      <button className="danger" onClick={() => setIsConfirming(true)}>
+      <button
+        type="button"
+        className="danger"
+        onClick={() => setIsConfirming(true)}
+      >
         Revoke Session
       </button>
 
