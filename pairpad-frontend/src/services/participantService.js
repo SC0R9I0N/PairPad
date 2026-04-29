@@ -35,7 +35,7 @@ const MOCK_MODE = true;
   "session ended" UX without an actual revoke. Set to null
   to disable. Counter resets on full page refresh.
 */
-const MOCK_REVOKE_AFTER_POLLS = 6;
+const MOCK_REVOKE_AFTER_POLLS = null;
 
 // poll counter for the revoke-after-N-polls test helper
 let pollCount = 0;
