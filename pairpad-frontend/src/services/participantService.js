@@ -1,51 +1,108 @@
 /*
   participantService.js
   ----------------------
-  Service layer for participant-related backend communication.
+  Service layer for session liveness + participant list.
 
-  Current state: uses STUBBED data — backend endpoint not yet built.
-  Returns the current user + 2 mock participants for demo purposes.
+  Provides one entry point: getSessionStatus(sessionId).
+  Used by useSessionStatus hook to drive polling.
 
-  Future backend API contract:
-    GET /api/session/:sessionId/participants
-    Response: [{ displayName: string, isOwner: boolean }]
+  Backend API contract (target):
+    GET /api/session/:sessionId
+    200 OK:
+      {
+        sessionId: string,
+        participants: [{ displayName: string, isOwner: boolean }]
+      }
+    404 Not Found:
+      Session has been revoked or never existed.
 
-  Real-time updates will eventually arrive via WebSocket subscription
+
+  Currently Implemented with a MOCK for testing
+  ==============================================
+  To Remove:
+    - MOCK_MODE = false  OR
+    - Delete everything in the "MOCK" comment fences including constants
+      and the mock branch inside getSessionStatus().
 */
+
+// ---------- MOCK START ----------
+// flip to false (or delete this whole block) when backend is live
+const MOCK_MODE = true;
 
 /*
-  getParticipants — returns the session's participant list.
-
-  Inputs:
-  - sessionId: string
-  - currentUser: { displayName, isOwner }
-
-  Output: Array<{ displayName, isOwner, isYou }>
-
-  Stub behavior: always returns 3 entries, arranged differently
-  depending on whether the current user is the owner.
+  Test helper: when set to a number N, the mock will throw
+  SessionNotFoundError after N polls. Lets you verify the
+  "session ended" UX without an actual revoke. Set to null
+  to disable. Counter resets on full page refresh.
 */
-export async function getParticipants(sessionId, currentUser) {
-  // TODO: Replace with real API / WebSocket subscription.
-  // Planned endpoint: GET /api/session/:sessionId/participants
-  console.log("Fetching participants for session:", sessionId);
+const MOCK_REVOKE_AFTER_POLLS = 6;
 
-  // tiny simulated delay so stubs feel slightly async, not instant
-  await new Promise((resolve) => setTimeout(resolve, 150));
+// poll counter for the revoke-after-N-polls test helper
+let pollCount = 0;
+// ---------- MOCK END ----------
 
-  if (currentUser.isOwner) {
-    // caller is the owner — add two mock non-owners
-    return [
-      { ...currentUser, isYou: true },
-      { displayName: "Jordan", isOwner: false, isYou: false },
-      { displayName: "Sam", isOwner: false, isYou: false },
-    ];
-  } else {
-    // caller joined someone else's session — mock an owner + one peer
-    return [
-      { displayName: "Alex", isOwner: true, isYou: false },
-      { ...currentUser, isYou: true },
-      { displayName: "Jordan", isOwner: false, isYou: false },
-    ];
+/*
+  SessionNotFoundError — error class so the hook can
+  distinguish "session is gone" from "network blip"
+  Throw this on 404; throw plain Error on anything else.
+*/
+export class SessionNotFoundError extends Error {
+  constructor() {
+    super("Session not found");
+    this.name = "SessionNotFoundError";
   }
+}
+
+/*
+  getSessionStatus — fetches session liveness + participants.
+  Returns: { sessionId, participants: [{ displayName, isOwner }] }
+  Throws SessionNotFoundError on 404, generic Error on other failures.
+*/
+export async function getSessionStatus(sessionId) {
+  // ---------- MOCK — DELETE WHEN BACKEND IS LIVE ----------
+  if (MOCK_MODE) {
+    pollCount += 1;
+
+    // simulate a revoke after N polls (when test flag is set)
+    if (
+      MOCK_REVOKE_AFTER_POLLS !== null &&
+      pollCount > MOCK_REVOKE_AFTER_POLLS
+    ) {
+      // small fake delay so it feels like a real round-trip
+      await new Promise((r) => setTimeout(r, 100));
+      throw new SessionNotFoundError();
+    }
+
+    // small fake delay so polling feels async, not synchronous
+    await new Promise((r) => setTimeout(r, 150));
+
+    /*
+      Mock participant list. Does NOT represent real session state —
+      these names are placeholders so the avatar cluster renders with
+      multiple entries during local testing. Real list comes from the
+      backend once MOCK_MODE = false.
+    */
+    return {
+      sessionId,
+      participants: [
+        { displayName: "Demo Peer", isOwner: false },
+      ],
+    };
+  }
+  // ---------- END MOCK BRANCH ----------
+
+  // real implementation
+  const response = await fetch(`/api/session/${sessionId}`);
+
+  // 404 = session revoked or never existed -> revoked/no session error
+  if (response.status === 404) {
+    throw new SessionNotFoundError();
+  }
+
+  // any other non-2xx is treated as transient
+  if (!response.ok) {
+    throw new Error(`Session status check failed: ${response.status}`);
+  }
+
+  return await response.json();
 }
