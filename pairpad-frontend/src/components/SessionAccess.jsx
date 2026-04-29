@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createSession, joinSession } from "../services/sessionService";
 import ParticipantIdentity from "./ParticipantIdentity";
+import Banner from "./Banner";
 
 /*
   SessionAccess.jsx
@@ -38,6 +39,12 @@ function SessionAccess({ onEnterSession }) {
   const [submitting, setSubmitting] = useState(null);
   const isLoading = submitting !== null;
 
+  /* 
+    inline error/warning surfaced to the user — replaces alert()
+    shape: { variant: "error" | "warning" | "info", message: string }
+  */
+  const [banner, setBanner] = useState(null);
+
   /*
     Pre-computed trimmed values used for validation and submission.
     trimmedName strips whitespace so "   " isn't treated as valid input.
@@ -56,6 +63,8 @@ function SessionAccess({ onEnterSession }) {
     off session info (incl. ownership) to parent for routing.
   */
   const handleCreate = async () => {
+    // clear any prior banner so the user knows this is a fresh attempt
+    setBanner(null);
     // mark as submitting so UI disables controls and shows cursor
     setSubmitting("create");
     try {
@@ -70,7 +79,8 @@ function SessionAccess({ onEnterSession }) {
       );
     } catch (error) {
       console.error("Error creating session:", error);
-      alert(error.message);
+      // creation failure is recoverable — warning, not error
+      setBanner({ variant: "warning", message: error.message });
     } finally {
       // always clear loading state, even on error (so user can retry)
       setSubmitting(null);
@@ -82,6 +92,8 @@ function SessionAccess({ onEnterSession }) {
     given name, then hands off to parent. Joiners are never owners.
   */
   const handleJoin = async () => {
+    // clear any prior banner so the user knows this is a fresh attempt
+    setBanner(null);
     // mark as submitting so UI disables controls and shows cursor
     setSubmitting("join");
     try {
@@ -91,7 +103,8 @@ function SessionAccess({ onEnterSession }) {
       onEnterSession(session.id, false, null, trimmedName);
     } catch (error) {
       console.error("Error joining session:", error);
-      alert(error.message);
+      // join failure (not found, full, revoked) — recoverable, warning
+      setBanner({ variant: "warning", message: error.message });
     } finally {
       // always clear loading state, even on error (so user can retry)
       setSubmitting(null);
@@ -124,6 +137,13 @@ function SessionAccess({ onEnterSession }) {
 
   return (
     <div style={{ marginTop: "20px" }}>
+      {/* inline error/warning surface — sits above the form */}
+      <Banner
+        variant={banner?.variant}
+        message={banner?.message}
+        onDismiss={() => setBanner(null)}
+      />
+
       <form onSubmit={handleSubmit}>
         {/* 
           Hidden submit button acts as the form's default button for

@@ -35,6 +35,11 @@
   --danger-bg: rgba(248, 113, 113, 0.1);
   --danger-border: rgba(248, 113, 113, 0.3);
 
+  /* warning — amber for recoverable issues (join failures, etc.) */
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.08);
+    --warning-border: rgba(251, 191, 36, 0.3);
+
   /* misc */
   --code-bg: #0f1411;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -407,4 +412,234 @@ code {
 .participants-dropdown .dropdown-glyph {
   color: var(--accent);
   font-weight: 700;
+}
+
+/* 
+  Banners — inline notification component for surfacing errors,
+  warnings, and info without using native alert() popups.
+*/
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid;
+  border-radius: var(--radius);
+  /* mono matches the terminal feel of other in-session text */
+  font-family: var(--mono);
+  font-size: 13px;
+  text-align: left;
+  margin: 12px 0;
+  /* subtle slide-in so banner entrance feels intentional, not jarring */
+  animation: banner-appear 0.2s ease-out;
+}
+
+@keyframes banner-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* error — red border, subtle red bg, readable heading-color text */
+.banner-error {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--text-heading);
+}
+
+.banner-error .banner-icon {
+  color: var(--danger);
+}
+
+/* warning — amber, less alarming than full red */
+.banner-warning {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+  color: var(--text-heading);
+}
+
+.banner-warning .banner-icon {
+  color: var(--warning);
+}
+
+/* info — phosphor green, for neutral system messages */
+.banner-info {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--text-heading);
+}
+
+.banner-info .banner-icon {
+  color: var(--accent);
+}
+
+/* circular icon badge — border + color set by variant rule above */
+.banner-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* message takes remaining space between icon and close button */
+.banner-message {
+  flex: 1;
+}
+
+/* 
+  Close button — overrides the global button style so it sits
+  unobtrusively. Hover lifts text to heading color for affordance.
+*/
+.banner-close {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.banner-close:hover:not(:disabled) {
+  background: transparent;
+  border: none;
+  color: var(--text-heading);
+}
+
+/* 
+  Confirm dialog — modal overlay for destructive/important actions.
+  Replaces native window.confirm() with on-theme styling.
+*/
+
+/* backdrop fills viewport, dims content, centers dialog */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  /* fade in for a smooth entrance */
+  animation: backdrop-appear 0.15s ease-out;
+}
+
+@keyframes backdrop-appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* dialog box — elevated bg with phosphor border treatment */
+.dialog {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  min-width: 320px;
+  max-width: 480px;
+  text-align: left;
+  /* subtle scale-in adds polish without feeling theatrical */
+  animation: dialog-appear 0.18s ease-out;
+}
+
+@keyframes dialog-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* danger variant gets a red-tinted top border as a severity cue */
+.dialog-danger {
+  border-top: 2px solid var(--danger);
+}
+
+/* header sits above the message — icon flush-left next to title */
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* circular icon badge — same pattern as Banner for consistency */
+.dialog-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* default icon uses phosphor green */
+.dialog .dialog-icon {
+  color: var(--accent);
+}
+
+/* danger overrides default — listed after for source-order precedence */
+.dialog-danger .dialog-icon {
+  color: var(--danger);
+}
+
+/* title — overrides global h3 label style to read as a real heading */
+.dialog-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-heading);
+}
+
+/* body text — readable, slightly muted compared to title */
+.dialog-message {
+  margin: 0 0 18px 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* button row pushes actions to the right edge */
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
