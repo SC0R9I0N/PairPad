@@ -307,3 +307,87 @@ def test_join_session_raises_when_session_is_full(monkeypatch):
     # Act / Assert
     with pytest.raises(ValueError, match="Session is full."):
         session.join_session("overflow-user")
+
+
+# verifies get_session_status returns not found for missing session
+def test_get_session_status_returns_not_found_for_unknown_session(client):
+    # Arrange
+
+    # Act
+    response = client.get("/session/missing-session")
+
+    # Assert
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "Session not found."}
+
+
+# confirms get_session_status returns owner-only session with correct structure
+def test_get_session_status_returns_owner_only_session(client, session_store):
+    # Arrange
+    fake_session = _make_fake_session(session_id="session-123", owner_name="Alice")
+    fake_session.participants = []
+    session_store["session-123"] = fake_session
+
+    # Act
+    response = client.get("/session/session-123")
+
+    # Assert
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["sessionId"] == "session-123"
+    assert len(data["participants"]) == 1
+    assert data["participants"][0] == {"displayName": "Alice", "isOwner": True}
+
+
+# verifies get_session_status includes owner and all participants with correct flags
+def test_get_session_status_returns_owner_and_participants(client, session_store):
+    # Arrange
+    fake_session = _make_fake_session(session_id="session-456", owner_name="Alice")
+    fake_session.participants = [
+        SimpleNamespace(display_name="Bob"),
+        SimpleNamespace(display_name="Charlie"),
+    ]
+    session_store["session-456"] = fake_session
+
+    # Act
+    response = client.get("/session/session-456")
+
+    # Assert
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["sessionId"] == "session-456"
+    assert len(data["participants"]) == 3
+    assert data["participants"][0] == {"displayName": "Alice", "isOwner": True}
+    assert data["participants"][1] == {"displayName": "Bob", "isOwner": False}
+    assert data["participants"][2] == {"displayName": "Charlie", "isOwner": False}
+
+
+# confirms get_session_status with many participants maintains correct structure
+def test_get_session_status_with_maximum_participants(client, session_store, monkeypatch):
+    # Arrange
+    _patch_session_ids(monkeypatch, "session-id", "owner-token", "session-link")
+    real_session = Session.create_session("Alice")
+    
+    # Fill session to capacity with participants
+    for i in range(Session.MAX_USERS - 1):
+        real_session.join_session(f"User-{i+2}")
+    
+    session_store["session-id"] = real_session
+
+    # Act
+    response = client.get("/session/session-id")
+
+    # Assert
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["sessionId"] == "session-id"
+    assert len(data["participants"]) == Session.MAX_USERS
+    
+    # Verify owner is first with isOwner flag
+    assert data["participants"][0]["displayName"] == "Alice"
+    assert data["participants"][0]["isOwner"] is True
+    
+    # Verify all other participants have isOwner: False
+    for i in range(1, Session.MAX_USERS):
+        assert data["participants"][i]["isOwner"] is False
+        assert "displayName" in data["participants"][i]
