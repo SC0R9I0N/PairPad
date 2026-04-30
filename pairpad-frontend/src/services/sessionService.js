@@ -116,3 +116,29 @@ export async function createSession(name) {
 
   return await response.json();
   }
+
+  /*
+    disconnectSession
+    ------------------
+    Called on browser tab close to remove a participant from the session.
+
+    INPUT:
+    - sessionId (string): which session to leave
+    - displayName (string): who is leaving
+
+    BACKEND INTERACTION:
+    - Sends POST to /api/session/:sessionId/disconnect
+    - Body: { displayName }
+    - Uses navigator.sendBeacon instead of fetch (fetch gets cancelled on page unload)
+    - Fire-and-forget — no response is read, no errors are caught
+  */
+  export function disconnectSession(sessionId, displayName) {
+    // pack identity into JSON
+    const payload = JSON.stringify({ displayName });
+
+    // Blob with explicit content-type so Flask's get_json() parses it
+    const blob = new Blob([payload], { type: "application/json" });
+
+    // queue the request — browser guarantees delivery even after tab closes
+    navigator.sendBeacon(`/api/session/${sessionId}/disconnect`, blob);
+  }

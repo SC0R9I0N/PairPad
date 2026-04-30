@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import OwnershipToken from "../components/OwnershipToken";
 import ParticipantList from "../components/ParticipantList";
 import Banner from "../components/Banner";
 import { useSessionStatus } from "../hooks/useSessionStatus";
+import { disconnectSession } from "../services/sessionService";
 
 /*
   SessionPage.jsx
@@ -56,20 +57,96 @@ function SessionPage({
   // build the full share URL from current origin + session ID
   const shareableLink = `${window.location.origin}/?session=${sessionId}`;
 
+/*
+    hasLeftCleanly: ref that tracks whether the user departed intentionally (clicked Revoke, or got redirected after session ended):
+    - If true, the beforeunload handler skips the disconnect call.
+
+    This is a ref (not state) because:
+    - The beforeunload listener is registered once on mount
+    - It captures a closure over state values at registration time
+    - State values in that closure would be stale (always false)
+    - A ref's .current is always the latest value, no matter when
+      the listener reads it
+  */
+  const hasLeftCleanly = useRef(false);
+
   /*
+    wrappedOnRevoke: sets the "already left" flag, then calls the
+    parent's onRevoke to reset session state and navigate home.
+
+    Used in place of the raw onRevoke prop in two spots:
+    1. The OwnershipToken component (owner clicks Revoke button)
+    2. The session-ended redirect effect (non-owner gets kicked)
+  */
+  const wrappedOnRevoke = () => {
+    // mark departure as intentional — beforeunload will check this
+    hasLeftCleanly.current = true;
+    // tell App.jsx to clear session state and show HomePage
+    onRevoke();
+  };
+
+
+  /*
+    beforeunload effect: fires when the user closes the tab or refreshes
+    - Owner path: reuses the existing DELETE /revoke endpoint via fetch
+    - Participant: uses sendBeacon via disconnectSession.
+  */
+
+  useEffect(() => {
+    // this function runs when the browser tab is about to close
+    function handleBeforeUnload() {
+      // bail out if the user already left cleanly (Revoke button, redirect, etc.)
+      if (hasLeftCleanly.current) return;
+
+      if (isOwner) {
+        // reuse the existing revoke endpoint — keepalive: true ensures
+        // the request survives page unload, just like sendBeacon does
+        fetch(`/api/session/${sessionId}/revoke`, {
+          method: "DELETE",
+          headers: { "X-Ownership-Token": ownershipToken },
+          keepalive: true,
+        });
+      } else {
+        // participant — fire-and-forget beacon to remove from list
+        disconnectSession(sessionId, displayName);
+      }
+    }
+
+    // attach the listener to the browser's beforeunload event
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // cleanup — runs when SessionPage unmounts or dependencies change
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+    // re-register if any of these change (they shouldn't mid-session,
+    // but React's exhaustive-deps rule wants them listed)
+  }, [sessionId, displayName, isOwner, ownershipToken]);
+
+
+ /*
     React to the polling hook detecting revoked session:
     - Route home after a short delay
     - The owner who initiated the revoke unmounts immediately via onRevoke() in OwnershipToken
     - The banner for "session ended" rendered below.
+    - Set hasLeftCleanly flag so double revoke is not triggered
   */
+
   useEffect(() => {
-    // owners navigate via OwnershipToken's onRevoke — skip the polling path
+    // owners navigate via OwnershipToken's wrappedOnRevoke — skip the polling path
     if (!sessionEnded || isOwner) return;
 
-    // redirect to home after a short delay
-    const timer = setTimeout(onRevoke, SESSION_ENDED_REDIRECT_DELAY);
+    // mark as intentional so beforeunload doesn't also fire a beacon
+    hasLeftCleanly.current = true;
+
+    // redirect to home after a short delay using the wrapped version
+    const timer = setTimeout(wrappedOnRevoke, SESSION_ENDED_REDIRECT_DELAY);
     return () => clearTimeout(timer);
-  }, [sessionEnded, isOwner, onRevoke]);
+  }, [sessionEnded, isOwner, wrappedOnRevoke]);
+
+
+
+
 
   /*
   Displayed banner = 
@@ -195,7 +272,7 @@ function SessionPage({
           isOwner={isOwner}
           sessionId={sessionId}
           ownershipToken={ownershipToken}
-          onRevoke={onRevoke}
+          onRevoke={wrappedOnRevoke}
           onError={handleRevokeError}
         />
 
