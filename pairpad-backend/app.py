@@ -101,6 +101,40 @@ def revoke_session(session_id):
     return jsonify({"message": "Session revoked."}), 200
 
 
+# Disconnect (browser close / tab close)
+# Called via navigator.sendBeacon from the frontend — fire-and-forget,
+# so the frontend never reads these responses.
+@app.route("/session/<session_id>/disconnect", methods=["POST"])
+def disconnect(session_id):
+    # silent=True prevents a 400 if JSON parsing fails unexpectedly
+    data = request.get_json(silent=True) or {}
+    display_name = data.get("displayName")
+
+    logger.info(f"Disconnect request: user={display_name}, sessionId={session_id}")
+
+    # displayName is required so we know who to remove
+    if not display_name:
+        logger.warning("Disconnect failed: displayName missing")
+        return jsonify({"error": "displayName is required."}), 400
+
+    # look up the session — may already be gone if owner revoked first
+    session = sessions.get(session_id)
+    if not session:
+        logger.warning(f"Disconnect failed: Session {session_id} not found")
+        return jsonify({"error": "Session not found."}), 404
+
+    # remove the participant from the session's list
+    removed = session.leave_session(display_name)
+    if removed:
+        logger.info(f"Participant {display_name} removed from session {session_id}")
+    else:
+        # already gone, or name didn't match — not an error worth crashing over
+        logger.warning(f"Participant {display_name} not found in session {session_id}")
+
+    # always 200 — frontend can't read this anyway (fire-and-forget)
+    return jsonify({"message": "Participant removed."}), 200
+
+
 # Get session status
 @app.route("/session/<session_id>", methods=["GET"])
 def get_session_status(session_id):
