@@ -122,26 +122,6 @@ Because PairPad is still under active development, some planned functionality ma
 
 ---
 
-## Team Members & Contributions
-
-### **Joe Denk — Product Owner**
-Worked primarily on the React frontend and UI elements, ensuring that functionalities were meeting customer needs. 
-Focused on providing the backbone, which the rest of the work for Sprint 5 was based on, as the frontend was the first feature finished.
-
-### **Garrett Reihner — Scrum Master**
-Organized the team and set out an achievable timeline for Sprint 5 with the end goals of Sprint 6 in mind. 
-Did primary development on the backend unit tests and documentation that could keep the team organized.
-
-### **Jonathan Coulter — Developer**
-Did the primary development work on the starting Flask skeleton and implementing the starting Session Management 
-Classes. Set up the framework that allowed for the creation of robust unit tests.
-
-### **Aidan Smagh — Developer**
-Did the primary development work on the frontend unit tests with Vitest, ensuring that the 
-logic was correct and all React items were properly implemented.
-
----
-
 ## Frontend Demos
 
 ![Demo 1](demos/HomePage.gif)
