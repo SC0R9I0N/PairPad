@@ -1,0 +1,8 @@
+{
+  "dev": {
+    "run": "cd pairpad-frontend && npm run dev"
+  },
+  "module-path": "./spacetimedb",
+  "server": "maincloud",
+  "database": "pairpad"
+}
