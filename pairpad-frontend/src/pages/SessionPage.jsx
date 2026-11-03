@@ -144,10 +144,6 @@ function SessionPage({
     return () => clearTimeout(timer);
   }, [sessionEnded, isOwner, wrappedOnRevoke]);
 
-
-
-
-
   /*
   Displayed banner = 
     - the session-ended message, otherwise:

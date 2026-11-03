@@ -30,9 +30,9 @@ def health():
 def create_session():
     data = request.get_json()
     display_name = data.get("displayName")
-    
     logger.info(f"Create session request received for user: {display_name}")
-
+    print("------------------------------------------------------------------------------------------------------------------------------")
+    print(data)
     if not display_name:
         logger.warning("Create session failed: displayName is missing")
         return jsonify({"error": "displayName is required"}), 400

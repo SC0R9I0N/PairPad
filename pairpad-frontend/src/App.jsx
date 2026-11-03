@@ -1,6 +1,7 @@
 import { useState } from "react";
 import HomePage from "./pages/HomePage";
 import SessionPage from "./pages/SessionPage";
+import ReducerTest from "./reducerTest"
 
 /*
   App.jsx
@@ -47,21 +48,29 @@ function App() {
     setDisplayName("");
   };
 
-  return (
+    return (
     <div>
-      {!sessionId ? (
-        <HomePage onEnterSession={handleEnterSession} />
-      ) : (
-        <SessionPage
-          sessionId={sessionId}
-          isOwner={isOwner}
-          ownershipToken={ownershipToken}
-          displayName={displayName}
-          onRevoke={handleLeaveSession}
-        />
-      )}
+      <ReducerTest>
+
+      </ReducerTest>
     </div>
   );
+
+  // return (
+  //   <div>
+  //     {!sessionId ? (
+  //       <HomePage onEnterSession={handleEnterSession} />
+  //     ) : (
+  //       <SessionPage
+  //         sessionId={sessionId}
+  //         isOwner={isOwner}
+  //         ownershipToken={ownershipToken}
+  //         displayName={displayName}
+  //         onRevoke={handleLeaveSession}
+  //       />
+  //     )}
+  //   </div>
+  // );
 }
 
 export default App;

@@ -10,6 +10,10 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default {
+export default __t.row({
   name: __t.string(),
-};
+  isOwner: __t.bool().name("is_owner"),
+  identity: __t.identity(),
+  sessionId: __t.string().name("session_id"),
+  id: __t.u64().primaryKey(),
+});

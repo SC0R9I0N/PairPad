@@ -6,3 +6,5 @@ __pycache__/
 pairpad-frontend/node_modules/
 
 .idea/
+.env
+.env.local
