@@ -12,4 +12,5 @@ import {
 
 export default {
   displayName: __t.string(),
+  sessionId: __t.string(),
 };

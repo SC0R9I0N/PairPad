@@ -1,12 +1,12 @@
 import SessionAccess from "../components/SessionAccess";
 
 /*
-  HomePage.jsx
+  HomePage.tsx
   -------------
   Entry point UI. Displays app title and delegates to SessionAccess
   for create/join logic.
 */
-function HomePage({ onEnterSession }) {
+function HomePage({ onEnterSession }: any) {
   return (
     <div style={{ textAlign: "center", marginTop: "40px" }}>
       <h1>PairPad</h1>
@@ -25,7 +25,7 @@ function HomePage({ onEnterSession }) {
         real-time collaborative code editor
       </p>
 
-      <SessionAccess onEnterSession={onEnterSession} />
+      <SessionAccess onEnterSession={onEnterSession}/>
     </div>
   );
 }

@@ -2,9 +2,11 @@ import { useState } from "react";
 import { createSession, joinSession } from "../services/sessionService";
 import ParticipantIdentity from "./ParticipantIdentity";
 import Banner from "./Banner";
+import { useReducer, useTable } from 'spacetimedb/react';
+import { reducers, tables } from '../module_bindings';
 
 /*
-  SessionAccess.jsx
+  SessionAccess.tsx
   ------------------
   Core UI component for the User Access subsystem.
 
@@ -21,16 +23,15 @@ import Banner from "./Banner";
 
 // hard cap on display name length — keeps UI tidy, prevents abuse
 const MAX_NAME_LENGTH = 30;
+const SESSION_ID_LENGTH = 8;
+const SESSION_ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 
-function SessionAccess({ onEnterSession }) {
+function SessionAccess({ onEnterSession }: any) {
   // display name input
   const [name, setName] = useState("");
 
   // session ID input — lazy initial state reads "?session=<id>" from URL once
-  const [sessionId, setSessionId] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("session") || "";
-  });
+  const [sessionID, setSessionID] = useState("");
 
   /*
     submitting — which async action is in flight, if any.
@@ -51,13 +52,17 @@ function SessionAccess({ onEnterSession }) {
     trimmedSessionId does the same for IDs pasted with stray whitespace.
   */
   const trimmedName = name.trim();
-  const trimmedSessionId = sessionId.trim();
+  const trimmedSessionId = sessionID.trim();
 
   // validity flags drive both button states and submit logic
   const nameIsValid =
     trimmedName.length > 0 && trimmedName.length <= MAX_NAME_LENGTH;
   const sessionIdIsValid = trimmedSessionId.length > 0;
 
+  const createSession = useReducer(reducers.createSession);
+  const [sessions, areYouLoading] = useTable(tables.sessions);
+  const [members, isReady] = useTable(tables.members);
+  
   /*
     handleCreate — requests a new session from the backend, then hands
     off session info (incl. ownership) to parent for routing.
@@ -66,24 +71,16 @@ function SessionAccess({ onEnterSession }) {
     // clear any prior banner so the user knows this is a fresh attempt
     setBanner(null);
     // mark as submitting so UI disables controls and shows cursor
-    setSubmitting("create");
+    //setSubmitting("create");
+
+    const candidateID = generateSessionID();
     try {
-      // always send trimmed name so backend doesn't store stray whitespace
-      const session = await createSession(trimmedName);
-      // hand off session info (incl. ownership) to parent for routing
-      onEnterSession(
-        session.id,
-        session.isOwner,
-        session.ownershipToken,
-        trimmedName,
-      );
+      await createSession({ displayName: trimmedName, sessionId: candidateID });
+      onEnterSession(candidateID, true, null, trimmedName);
     } catch (error) {
       console.error("Error creating session:", error);
       // creation failure is recoverable — warning, not error
-      setBanner({ variant: "warning", message: error.message });
-    } finally {
-      // always clear loading state, even on error (so user can retry)
-      setSubmitting(null);
+        //setError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -91,25 +88,25 @@ function SessionAccess({ onEnterSession }) {
     handleJoin — asks backend to join the current session ID under the
     given name, then hands off to parent. Joiners are never owners.
   */
-  const handleJoin = async () => {
-    // clear any prior banner so the user knows this is a fresh attempt
-    setBanner(null);
-    // mark as submitting so UI disables controls and shows cursor
-    setSubmitting("join");
-    try {
-      // send trimmed values to avoid whitespace-caused lookup failures
-      const session = await joinSession(trimmedSessionId, trimmedName);
-      // joiners are never owners, so pass false
-      onEnterSession(session.id, false, null, trimmedName);
-    } catch (error) {
-      console.error("Error joining session:", error);
-      // join failure (not found, full, revoked) — recoverable, warning
-      setBanner({ variant: "warning", message: error.message });
-    } finally {
-      // always clear loading state, even on error (so user can retry)
-      setSubmitting(null);
-    }
-  };
+//   const handleJoin = async () => {
+//     // clear any prior banner so the user knows this is a fresh attempt
+//     setBanner(null);
+//     // mark as submitting so UI disables controls and shows cursor
+//     setSubmitting("join");
+//     try {
+//       // send trimmed values to avoid whitespace-caused lookup failures
+//       const session = await joinSession(trimmedSessionId, trimmedName);
+//       // joiners are never owners, so pass false
+//       onEnterSession(session.id, false, null, trimmedName);
+//     } catch (error) {
+//       console.error("Error joining session:", error);
+//       // join failure (not found, full, revoked) — recoverable, warning
+//       setBanner({ variant: "warning", message: error.message });
+//     } finally {
+//       // always clear loading state, even on error (so user can retry)
+//       setSubmitting(null);
+//     }
+//   };
 
   /*
     handleSubmit — fires when the form submits (via the hidden submit
@@ -117,7 +114,7 @@ function SessionAccess({ onEnterSession }) {
       - empty session ID → create a new session
       - session ID filled → join that session
   */
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault(); // stop browser's default form submit
 
     // ignore Enter while a request is already in flight
@@ -128,21 +125,30 @@ function SessionAccess({ onEnterSession }) {
 
     if (sessionIdIsValid) {
       // session ID present → user wants to join
-      handleJoin();
+      //handleJoin();
     } else {
       // session ID empty → user wants to create
       handleCreate();
     }
   };
 
+    const generateSessionID = (): string => {
+        let sessionID = "";
+        for (let i = 0; i < SESSION_ID_LENGTH; i++) {
+        const index = Math.floor(Math.random() * (SESSION_ID_ALPHABET.length));
+        sessionID += SESSION_ID_ALPHABET[index];
+        }
+        return sessionID;
+    }
+
   return (
     <div style={{ marginTop: "20px" }}>
       {/* inline error/warning surface — sits above the form */}
-      <Banner
+      {/* <Banner
         variant={banner?.variant}
         message={banner?.message}
         onDismiss={() => setBanner(null)}
-      />
+      /> */}
 
       <form onSubmit={handleSubmit}>
         {/* 
@@ -200,8 +206,8 @@ function SessionAccess({ onEnterSession }) {
           <input
             type="text"
             placeholder="Enter session ID"
-            value={sessionId}
-            onChange={(e) => setSessionId(e.target.value)}
+            value={sessionID}
+            onChange={(e) => setSessionID(e.target.value)}
             disabled={isLoading}
           />
           {/* 
@@ -210,7 +216,7 @@ function SessionAccess({ onEnterSession }) {
           */}
           <button
             type="button"
-            onClick={handleJoin}
+            // onClick={handleJoin}
             disabled={!nameIsValid || !sessionIdIsValid || isLoading}
             style={{ marginLeft: "8px" }}
           >

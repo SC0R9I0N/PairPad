@@ -48,29 +48,29 @@ function App() {
     setDisplayName("");
   };
 
-    return (
-    <div>
-      <ReducerTest>
-
-      </ReducerTest>
-    </div>
-  );
-
-  // return (
+  //   return (
   //   <div>
-  //     {!sessionId ? (
-  //       <HomePage onEnterSession={handleEnterSession} />
-  //     ) : (
-  //       <SessionPage
-  //         sessionId={sessionId}
-  //         isOwner={isOwner}
-  //         ownershipToken={ownershipToken}
-  //         displayName={displayName}
-  //         onRevoke={handleLeaveSession}
-  //       />
-  //     )}
+  //     <ReducerTest>
+
+  //     </ReducerTest>
   //   </div>
   // );
+
+  return (
+    <div>
+      {!sessionId ? (
+        <HomePage onEnterSession={handleEnterSession} />
+      ) : (
+        <SessionPage
+          sessionId={sessionId}
+          isOwner={isOwner}
+          ownershipToken={ownershipToken}
+          displayName={displayName}
+          onRevoke={handleLeaveSession}
+        />
+      )}
+    </div>
+  );
 }
 
 export default App;
