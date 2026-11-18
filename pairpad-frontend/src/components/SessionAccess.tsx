@@ -70,17 +70,14 @@ function SessionAccess({ onEnterSession }: any) {
   const handleCreate = async () => {
     // clear any prior banner so the user knows this is a fresh attempt
     setBanner(null);
-    // mark as submitting so UI disables controls and shows cursor
-    //setSubmitting("create");
 
     const candidateID = generateSessionID();
+    console.log(candidateID);
     try {
       await createSession({ displayName: trimmedName, sessionId: candidateID });
       onEnterSession(candidateID, true, null, trimmedName);
     } catch (error) {
       console.error("Error creating session:", error);
-      // creation failure is recoverable — warning, not error
-        //setError(err instanceof Error ? err.message : String(err));
     }
   };
 

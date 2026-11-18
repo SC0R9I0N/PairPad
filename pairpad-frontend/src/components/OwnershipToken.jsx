@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { revokeSession } from "../services/sessionService";
 import ConfirmDialog from "./ConfirmDialog";
+import { useReducer } from 'spacetimedb/react';
+import { reducers } from '../module_bindings';
 
 /*
   OwnershipToken.jsx
@@ -10,23 +11,26 @@ import ConfirmDialog from "./ConfirmDialog";
 
   Props:
   - isOwner: boolean — component returns null if false
-  - sessionId, ownershipToken: needed for the revoke call
+  - sessionId, displayName: used by the revoke reducer
   - onRevoke: parent callback after successful revoke
   - onError: parent callback for surfacing failures via banner
 
   Backend interface:
-    revokeSession() → DELETE /api/session/:sessionId/revoke
+    revokeSession({ displayName, candidateId })
     Effect: disconnects all users, invalidates the session.
 */
 function OwnershipToken({
   isOwner,
   sessionId,
+  displayName,
   ownershipToken,
   onRevoke,
   onError,
 }) {
   // controls whether the confirmation dialog is currently open
   const [isConfirming, setIsConfirming] = useState(false);
+
+  const revokeSession = useReducer(reducers.revokeSession);
 
   // non-owners see nothing from this component
   if (!isOwner) return null;
@@ -40,7 +44,7 @@ function OwnershipToken({
     setIsConfirming(false);
     try {
       // call backend to tear down the session
-      await revokeSession(sessionId, ownershipToken);
+      await revokeSession({ displayName, candidateId: sessionId });
       // notify parent — resets session state and returns home
       onRevoke();
     } catch (error) {

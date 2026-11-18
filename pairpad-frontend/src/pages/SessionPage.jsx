@@ -267,6 +267,7 @@ function SessionPage({
         <OwnershipToken
           isOwner={isOwner}
           sessionId={sessionId}
+          displayName={displayName}
           ownershipToken={ownershipToken}
           onRevoke={wrappedOnRevoke}
           onError={handleRevokeError}

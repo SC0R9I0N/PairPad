@@ -7,6 +7,8 @@ import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
 import CreateSessionReducer from "../create_session_reducer";
+import RevokeSessionReducer from "../revoke_session_reducer";
 
 export type CreateSessionParams = __Infer<typeof CreateSessionReducer>;
+export type RevokeSessionParams = __Infer<typeof RevokeSessionReducer>;
 

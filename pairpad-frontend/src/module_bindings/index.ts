@@ -35,6 +35,7 @@ import {
 
 // Import all reducer arg schemas
 import CreateSessionReducer from "./create_session_reducer";
+import RevokeSessionReducer from "./revoke_session_reducer";
 
 // Import all procedure arg schemas
 
@@ -51,6 +52,9 @@ const tablesSchema = __schema({
     indexes: [
       { accessor: 'id', name: 'members_id_idx_btree', algorithm: 'btree', columns: [
         'id',
+      ] },
+      { accessor: 'sessionID', name: 'members_session_id_idx_btree', algorithm: 'btree', columns: [
+        'sessionId',
       ] },
     ],
     constraints: [
@@ -73,6 +77,7 @@ const tablesSchema = __schema({
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
   __reducerSchema("create_session", CreateSessionReducer),
+  __reducerSchema("revoke_session", RevokeSessionReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

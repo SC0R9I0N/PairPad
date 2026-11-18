@@ -31,6 +31,7 @@ function App() {
     token = null,
     name = "",
   ) => {
+    console.log(id);
     setSessionId(id);
     setIsOwner(ownerStatus);
     setOwnershipToken(token);
